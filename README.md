@@ -1,68 +1,154 @@
-# JobSearch API
+# JobSearch API (v1.1)
 
-A high-performance job listing backend API built using Django and Django REST Framework. It includes real-world features like filtering, pagination, sorting, data seeding, unit testing, caching, and Docker support.
+A clean, production-grade REST API built with Django and PostgreSQL.  
+Includes fast job listings, resume-score AI endpoint, pagination, filtering, ordering, caching, benchmarking, and Docker support.
 
-## 🔍 Features
+---
 
-- List, create, update, and delete job posts
-- Filter by location, company
-- Search by keyword (title or description)
-- Sort by salary or post date
-- Paginate large result sets
-- Seed 10,000+ jobs using Faker
-- Load tested with ApacheBench
-- Unit tested for correctness
-- Caching for high-read endpoints
-- Dockerized for easy deployment
+## Features
 
-## 🚀 Quick Start
+- RESTful Job Posting API (`/api/jobs/`)
+- Resume vs Job Description AI Score (`/resume-score/`)
+- Pagination, filtering, ordering
+- PostgreSQL for realistic SQL integration
+- Faker-based data seeding for testing
+- Caching using `django.core.cache`
+- Performance benchmarking with ApacheBench (`ab`)
+- Unit tests for key endpoints
+- Docker-ready (`Dockerfile`, `docker-compose.yml`)
+- Clean Git structure with versioning and `.gitignore`
 
-```
-# Local Development
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver
+---
 
-# Visit: http://localhost:8000/api/jobs/
-
-# Docker
-docker-compose up --build
-
-# Visit: http://localhost:8000/api/jobs/
-
-# Seeding Fake Data
-python manage.py generate_fake_jobs 10000
-
-# Run Unit Tests
-python manage.py test
-
-# Load Testing with ApacheBench
-ab -n 1000 -c 10 http://127.0.0.1:8000/api/jobs/
-```
-
-## 📁 Project Structure
+## Project Structure
 
 ```
 jobsearch-api/
 ├── jobs/
+│   ├── admin.py
+│   ├── apps.py
 │   ├── models.py
-│   ├── views.py
-│   ├── urls.py
 │   ├── serializers.py
-│   ├── tests.py
-│   └── management/
-│       └── commands/
-│           └── generate_fake_jobs.py
+│   ├── urls.py
+│   ├── views.py
+│   └── tests.py
+│
 ├── jobsearch/
+│   ├── __init__.py
 │   ├── settings.py
-│   └── urls.py
+│   ├── urls.py
+│   └── wsgi.py
+│
+├── manage.py
+├── requirements.txt
 ├── Dockerfile
 ├── docker-compose.yml
-├── requirements.txt
-└── README.md
+└── .gitignore
 ```
 
-## 📫 Author
+---
 
-**Hemanth Kumar Pappu**
-GitHub: [phkgh](https://github.com/phkgh)
+## Resume AI Endpoint
+
+**Endpoint:**  
+`POST /resume-score/`
+
+**Request JSON:**
+```json
+{
+  "resume": "Python, Django, REST",
+  "job_description": "Django and REST API"
+}
+```
+
+**Response JSON:**
+```json
+{
+  "score": 33,
+  "match_summary": "2 of 6 key terms matched: django, rest"
+}
+```
+
+**Key Notes:**
+- Tokenized, case-insensitive matching
+- Configurable key term logic
+- Fast: responds in < 30ms on local server
+
+---
+
+## Database
+
+**Production DB:** PostgreSQL  
+- Database: `jobsearch_db`
+- User: `jobsearch_user`
+- Password: `securepass123456789`
+
+Ensure PostgreSQL is running:
+
+```bash
+brew services start postgresql
+psql postgres
+# Then:
+CREATE DATABASE jobsearch_db;
+CREATE USER jobsearch_user WITH PASSWORD 'securepass123456789';
+GRANT ALL PRIVILEGES ON DATABASE jobsearch_db TO jobsearch_user;
+```
+
+---
+
+## How to Run (Local)
+
+```bash
+# Clone the repo
+git clone https://github.com/phkgh/jobsearch-api.git
+cd jobsearch-api
+
+# Setup virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Apply migrations
+python manage.py migrate
+
+# Run server
+python manage.py runserver
+```
+
+---
+
+## Performance Benchmarks
+
+Tested with 1000 requests, 10 concurrency:
+
+```bash
+ab -n 1000 -c 10 http://127.0.0.1:8000/api/jobs/
+```
+
+**Results:**
+- Requests per second: **~64.08**
+- Failed requests: **0**
+- Average response time: **156ms**
+- Caching reduced cold-start latency by **~70%**
+
+---
+
+## Versioning
+
+- `v1.0`: Initial SQLite-based REST API
+- `v1.1`: PostgreSQL + resume-score AI endpoint
+
+---
+
+## License
+
+MIT License
+
+---
+
+## Contact
+
+**Author:** Hemanth Kumar Pappu  
+**GitHub:** [phkgh](https://github.com/phkgh)
