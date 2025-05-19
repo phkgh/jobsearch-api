@@ -18,3 +18,8 @@ class JobPostSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Salary must be a positive number.")
         return value
+
+
+class ResumeScoreSerializer(serializers.Serializer):
+    resume = serializers.CharField()
+    job_description = serializers.CharField()
