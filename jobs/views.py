@@ -1,21 +1,16 @@
+from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
 
-from rest_framework.pagination import PageNumberPagination
-from .pagination import JobPostPagination
-from rest_framework import viewsets
-from .models import JobPost
-from .serializers import JobPostSerializer
-
-from django.db.models import Q
-
-from django.shortcuts import render, get_object_or_404
-
+from rest_framework import status, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.views import APIView
+
 from .models import JobPost
-from .serializers import JobPostSerializer
+from .serializers import JobPostSerializer, ResumeScoreSerializer
+from .pagination import JobPostPagination
 
 
 class JobPostViewSet(viewsets.ModelViewSet):
@@ -32,7 +27,6 @@ def job_list_create(request):
     if request.method == 'GET':
         jobs = JobPost.objects.all()
 
-        # Optional filters
         location = request.query_params.get('location')
         company = request.query_params.get('company')
         search = request.query_params.get('search')
@@ -42,7 +36,6 @@ def job_list_create(request):
             jobs = jobs.filter(location__icontains=location)
         if company:
             jobs = jobs.filter(company__icontains=company)
-
         if search:
             jobs = jobs.filter(
                 Q(title__icontains=search) | Q(description__icontains=search)
@@ -51,14 +44,14 @@ def job_list_create(request):
         if ordering in ['salary', '-salary', 'posted_at', '-posted_at']:
             jobs = jobs.order_by(ordering)
         else:
-            jobs = jobs.order_by('-posted_at')  # Default to newest first
+            jobs = jobs.order_by('-posted_at')
 
         paginator = JobPostPagination()
         paginated_jobs = paginator.paginate_queryset(jobs, request)
         serializer = JobPostSerializer(paginated_jobs, many=True)
         return paginator.get_paginated_response(serializer.data)
 
-    if request.method == 'POST':
+    elif request.method == 'POST':
         serializer = JobPostSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -75,15 +68,33 @@ def job_detail_update_delete(request, id):
         return Response(serializer.data)
 
     elif request.method == 'PUT':
-        try:
-            serializer = JobPostSerializer(job, data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        serializer = JobPostSerializer(job, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'DELETE':
         job.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ResumeScoreView(APIView):
+    def post(self, request):
+        serializer = ResumeScoreSerializer(data=request.data)
+        if serializer.is_valid():
+            resume = serializer.validated_data['resume']
+            job_desc = serializer.validated_data['job_description']
+
+            keywords = ['python', 'django', 'rest', 'sql', 'api', 'postgre']
+            resume_lower = resume.lower()
+            job_desc_lower = job_desc.lower()
+            matched_keywords = [
+                kw for kw in keywords if kw in resume_lower and kw in job_desc_lower]
+            score = int((len(matched_keywords) / len(keywords)) * 100)
+
+            return Response({
+                'score': score,
+                'match_summary': f"{len(matched_keywords)} of {len(keywords)} key terms matched: {', '.join(matched_keywords)}"
+            }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
