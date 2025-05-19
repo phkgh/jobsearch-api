@@ -1,49 +1,74 @@
 # JobSearch API (v1.1)
 
-A clean, production-grade REST API built with Django and PostgreSQL.  
-Includes fast job listings, resume-score AI endpoint, pagination, filtering, ordering, caching, benchmarking, and Docker support.
+A robust backend API for job listings built with Django and PostgreSQL. It features pagination, filtering, ordering, and performance benchmarking. A lightweight resume-matching endpoint is included to showcase experimental logic for future AI enhancements.
 
 ---
 
 ## Features
 
-- RESTful Job Posting API (`/api/jobs/`)
-- Resume vs Job Description AI Score (`/resume-score/`)
-- Pagination, filtering, ordering
-- PostgreSQL for realistic SQL integration
-- Faker-based data seeding for testing
-- Caching using `django.core.cache`
-- Performance benchmarking with ApacheBench (`ab`)
-- Unit tests for key endpoints
-- Docker-ready (`Dockerfile`, `docker-compose.yml`)
-- Clean Git structure with versioning and `.gitignore`
+- RESTful API for job listings (CRUD)
+- Resume-job matching endpoint using key-term relevance scoring
+- PostgreSQL database with environment-specific config
+- Caching enabled for repeated API calls
+- Performance benchmarking using ApacheBench
+- Dockerized setup with docker-compose
+- Clean project structure and modular code
+- Versioned releases with GitHub integration
 
+## API Endpoints
+
+| Method | Endpoint           | Description                        |
+|--------|--------------------|------------------------------------|
+| GET    | /api/jobs/         | List all job posts                 |
+| POST   | /api/jobs/         | Create a new job post              |
+| GET    | /api/jobs/{id}/    | Retrieve a specific job post       |
+| PUT    | /api/jobs/{id}/    | Update a job post                  |
+| DELETE | /api/jobs/{id}/    | Delete a job post                  |
+| POST   | /resume-score/     | Returns a relevance score for a resume vs job description
+
+## Resume Scoring Endpoint
+
+Takes in resume and job description as plain text and returns:
+
+- Score (percentage of keyword match)
+- Summary of matched key terms
 ---
 
 ## Project Structure
 
 ```
-jobsearch-api/
-├── jobs/
+.
+├── Dockerfile
+├── LICENSE
+├── README.md
+├── docker-compose.yml
+├── jobs
+│   ├── __init__.py
 │   ├── admin.py
 │   ├── apps.py
+│   ├── management
+│   │   ├── __init__.py
+│   │   └── commands
+│   ├── migrations
+│   │   ├── 0001_initial.py
+│   │   ├── 0002_alter_jobpost_company_alter_jobpost_location_and_more.py
+│   │   └── __init__.py
 │   ├── models.py
+│   ├── pagination.py
 │   ├── serializers.py
+│   ├── test.py
+│   ├── tests.py
 │   ├── urls.py
-│   ├── views.py
-│   └── tests.py
-│
-├── jobsearch/
+│   └── views.py
+├── jobsearch
 │   ├── __init__.py
+│   ├── asgi.py
 │   ├── settings.py
 │   ├── urls.py
 │   └── wsgi.py
-│
 ├── manage.py
-├── requirements.txt
-├── Dockerfile
-├── docker-compose.yml
-└── .gitignore
+└── requirements.txt
+
 ```
 
 ---
@@ -70,9 +95,14 @@ jobsearch-api/
 ```
 
 **Key Notes:**
-- Tokenized, case-insensitive matching
-- Configurable key term logic
-- Fast: responds in < 30ms on local server
+
+Tokenized, case-insensitive keyword matching
+
+Clean logic that avoids complex NLP libraries
+
+Fast response time: ~14ms average per request on local server using PostgreSQL
+
+Supports easy testing via Postman or curl using simple JSON payloads
 
 ---
 
@@ -121,24 +151,41 @@ python manage.py runserver
 
 ## Performance Benchmarks
 
-Tested with 1000 requests, 10 concurrency:
+Tested using ApacheBench with 1000 requests and 10 concurrent users on the /resume-score/ endpoint.
 
-```bash
-ab -n 1000 -c 10 http://127.0.0.1:8000/api/jobs/
-```
+Requests per second: 695.32
 
-**Results:**
-- Requests per second: **~64.08**
-- Failed requests: **0**
-- Average response time: **156ms**
-- Caching reduced cold-start latency by **~70%**
+Average response time: 14 ms
 
+Failed requests: 0
+
+Total transferred: 401,000 bytes
+
+Total body sent: 351,000 bytes
+
+HTML transferred: 83,000 bytes
+
+Transfer rate:
+
+    Received: 272.29 Kbytes/sec
+
+    Sent: 238.34 Kbytes/sec
+
+    Total: 510.63 Kbytes/sec
+
+Latency:
+
+    50% of requests completed in 14 ms
+
+    99% of requests completed under 43 ms
+
+    100% of requests completed under 48 ms
 ---
 
 ## Versioning
 
-- `v1.0`: Initial SQLite-based REST API
-- `v1.1`: PostgreSQL + resume-score AI endpoint
+- `v1.0`: Initial version with core job posting API and performance benchmarking
+- `v1.1`: PostgreSQL + resume-score AI endpoint with AI keyword matching
 
 ---
 
