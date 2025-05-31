@@ -108,7 +108,7 @@ Supports easy testing via Postman or curl using simple JSON payloads
 
 ## Database
 
-**Production DB:** PostgreSQL  
+**Production DB:** PostgreSQL  default credentials
 - Database: `jobsearch_db`
 - User: `jobsearch_user`
 - Password: `securepass123456789`
